@@ -1,0 +1,25 @@
+import aiohttp
+import asyncio
+
+async def check_token(token):
+    headers = {"Authorization": token}
+    async with aiohttp.ClientSession() as session:
+        async with session.get("https://discord.com/api/v10/users/@me", headers=headers) as resp:
+            return token if resp.status == 200 else None
+
+async def main():
+    with open("nodes.txt") as f:
+        tokens = [line.strip() for line in f if line.strip()]
+
+    valid = []
+    tasks = [check_token(t) for t in tokens]
+    results = await asyncio.gather(*tasks)
+
+    with open("valid_nodes.txt", "w") as f:
+        for token in results:
+            if token:
+                f.write(token + "\n")
+
+    print(f"✅ {len([t for t in results if t])} valid tokens saved to valid_nodes.txt")
+
+asyncio.run(main())
